@@ -1,0 +1,33 @@
+#!/bin/bash
+#SBATCH -N 1
+#SBATCH -p PM --mem=128GB
+#SBATCH --ntasks-per-node 28
+#SBATCH -t 06:00:00
+# echo commands to stdout
+set -x
+
+### move to working directory
+cd /pylon2/ci4s87p/xiej/SRR
+gunzip SRR3103786*
+# load fastqc
+module load fastqc
+# run fastqc
+# fastqc SRR3103785.fastq
+
+## run btrim
+cd ../ncbi
+./btrim64-static -q -t ../SRR/SRR3103786.fastq -o ../SRR/SRR3103786_btrim.fastq
+
+## run fastqc again
+cd ../SRR
+fastqc ./SRR3103786_btrim.fastq
+
+## run hisat2##
+module load hisat2
+hisat2 -x ./hisatindex/ecoliMG1655 -U ./SRR3103786_btrim.fastq -S ./SRR3103786.sam
+
+## run HTseq ##
+module load htseq
+htseq-count -s no -i locus_tag -t gene ./SRR3103786.sam ../ncbi/NC_000913.gff >./SRR3103786.count
+
+
