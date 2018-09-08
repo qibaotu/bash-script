@@ -1,0 +1,43 @@
+#!/bin/bash
+#SBATCH -N 1
+#SBATCH -p PM --mem=128GB
+#SBATCH --ntasks-per-node 28
+#SBATCH -t 96:00:00
+# echo commands to stdout
+set -x
+
+### move to working directory
+cd /pylon2/ci4s87p/xiej/SRR/SRR1
+
+for file in *.gz;
+do
+	gunzip $file
+done
+
+# load fastqc
+module load fastqc
+for file in *fastq
+do
+	## run btrim
+	/pylon2/ci4s87p/xiej/ncbi/btrim64-static -q -t ./$file -o ./"$(basename $file .fastq)_btrim.fastq"
+done
+	
+	
+for file in *btrim.fastq
+do
+	## run fastqc again
+	#fastqc $file
+
+	## run hisat2##
+	module load hisat2
+	hisat2 -x /pylon2/ci4s87p/xiej/SRR/hisatindex/ecoliMG1655 -U ./$file -S ./"$(basename $file _btrim.fastq).sam"
+done
+
+for file in *sam
+do
+	## run HTseq ##
+	module load htseq
+	htseq-count -s no -i locus_tag -t gene ./$file /pylon2/ci4s87p/xiej/ncbi/NC_000913.gff >./"$(basename $file .sam).count"
+done
+
+
