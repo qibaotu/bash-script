@@ -1,0 +1,34 @@
+#!/bin/sh
+#SBATCH -J myjob          # Job name
+#SBATCH -o myjob.%j.out   # define stdout filename; %j expands to jobid
+#SBATCH -e myjob.%j.err   # define stderr filename; skip to combine stdout and stderr
+
+#SBATCH --mail-user=Juan.Xie@sdstate.edu
+#SBATCH --mail-type=ALL
+
+#SBATCH -N 1              # Number of nodes, not cores (16 cores/node)
+#SBATCH -p defq
+#SBATCH -t 120:00:00       # max time
+#SBATCH --ntasks-per-node 20  # cores 
+
+
+nCores=10
+module use /cm/shared/modulefiles_local
+
+
+
+### STAR 
+genomeDir=/gpfs/scratch/juan.xie/resources/star_index_hg38
+genomeFastaFiles=/gpfs/scratch/juan.xie/resources/hg38/Homo_sapiens_assembly38.fasta
+sjdbGTFfile=/gpfs/scratch/juan.xie/resources/hg38/gencode.v26.primary_assembly.annotation.gtf
+dbsnp_vcf=/gpfs/scratch/juan.xie/resources/hg38/dbsnp_146.hg38.vcf
+
+# generate genome index
+mkdir $genomeDir
+time STAR --runThreadN 12 \
+	--runMode genomeGenerate \
+	--genomeDir $genomeDir \
+	--genomeFastaFiles $genomeFastaFiles \
+	--sjdbGTFfile /gpfs/scratch/juan.xie/resources/hg38/gencode.v26.primary_assembly.annotation.gtf \
+	--sjdbOverhang 99
+
